@@ -1,18 +1,14 @@
 console.log("插件已运行");
-let wUrl = window.location.href.toString();
-if (wUrl.indexOf("_delete_word") !== -1) {
-    chrome.runtime.sendMessage({cmd: new Date().getTime()});
-    window.location.href = wUrl.replace("_delete_word", "");
-}
-let isGo = true, isDown = true, num = 1;
+let isGo = true, num = 1;
 let isSubmit = false; //是否抢到单
 let code = null; //页面编码
 let password = null; //支付密码
 let isStop = false;
+let lastTime = 0;
 
 // async
-async function ajax_get(url, index) {
-    if(isStop) return;
+function ajax_get(url, index) {
+    if (isStop) return;
     // 步骤一:创建异步对象
     let ajax = new XMLHttpRequest();
     // 步骤二:设置请求的url参数,参数一是请求的类型,参数二是请求的url,可以带参数,动态的传递参数starName到服务端
@@ -27,62 +23,67 @@ async function ajax_get(url, index) {
             // console.log(ajax.responseText);//输入相应的内容
             isGo = false;
             if (!isSubmit && ajax.responseText.length > 500) {
-                let as = "<form" + ajax.responseText.toString().split("<form")[1];
-                let sa = as.split("</form>")[0] + "</form>";
+                // let as = "<form" + ajax.responseText.toString().split("<form")[1];
+                // let sa = as.split("</form>")[0] + "</form>";
                 // 开始支付
-                console.log(new Date().getTime());
-                chrome.runtime.sendMessage({cmd: new Date().getTime()});
-                pay(sa);
+                lastTime = new Date().getTime();
+                pay(getVal(ajax.responseText.toString(), "<form", "</form>"));
             } else {
-                if(index === 199){
+                if(!isSubmit){
                     num++;
                     start(code);
+                } else if (isSubmit) {
+                    isStop = true;
                 }
-                // console.log(ajax.responseText);
             }
         }
     };
 }
 
+// 截取关键值
+function getVal(text, str1, str2) {
+    return text.split(str1)[1].split(str2)[0];
+}
+
 // 支付订单
 function pay(text) {
-    text = text.replace('name="submit"', 'name="submit_delete_word"');
-    let objE = document.createElement("div");
-    objE.innerHTML = text;
+    // let token = text.split('name="token"  value="')[1].split('" />')[0];
+    // let md5 = text.split('name="md5"  value="')[1].split('" />')[0];
+    // let account = text.split('name="account" value="')[1].split('" id="account"')[0];
+    // let price = text.split('name="price"  value="')[1].split('" id="price"')[0];
 
-    let form = objE.children[0];
-    document.body.appendChild(form);
-    form[2].defaultValue = 1;
-    form[7].defaultValue = password;
-    // chrome.runtime.sendMessage({cmd: "已停止！！共发起" + num*200 + "个请求, 支付耗时：" + new Date().getTime()});
-    form.submit();
+    // 表单提交方式
+    // text = text.replace('name="submit"', 'name="submit_delete_word"');
+    // let objE = document.createElement("div");
+    // objE.innerHTML = text;
+
+    // let form = objE.children[0];
+    // document.body.appendChild(form);
+    // form[2].defaultValue = 1;
+    // form[7].defaultValue = password;
+    // form.submit();
 
     // jq的Ajax提交
-    // $.ajax({
-    //     url: "http://www.nilaidang.com/order/order-reserve-" + code + ".html",
-    //     data: $(form).serialize(),
-    //     // data: {
-    //     //     payment: 2,
-    //     //     submit: 1,
-    //     //     token: "7efbdaa4bda12c49b3601c75602729d9",
-    //     //     md5: "",
-    //     //     account: "",
-    //     //     price: "",
-    //     //     payword: form[7].defaultValue,
-    //     // },
-    //     type: "get",
-    //     contentType: "x-www-form-urlencoded",
-    //     processData: false,
-    //     success: function (info) {
-    //         console.log(new Date().getTime());
-    //         console.log(info);
-    //         // if (info === "success") {
-    //         //     alert("成功上传");
-    //         // } else {
-    //         //     alert(info);
-    //         // }
-    //     }
-    // });
+    $.ajax({
+        url: "http://www.nilaidang.com/order/order-reserve-" + code + ".html",
+        // data: $(form).serialize(),
+        data: "payment=2&submit=1&token=" + getVal(text, 'name="token"  value="', '" />')
+            + "&md5=" + encodeURIComponent(getVal(text, 'name="md5"  value="', '" />'))
+            + "&account=" + getVal(text, 'name="account" value="', '" id="account"')
+            + "&price=" + getVal(text, 'name="price"  value="', '" id="price"')
+            + "&payword=" + password,
+        type: "get",
+        contentType: "x-www-form-urlencoded",
+        processData: false,
+        success: function (info) {
+            isSubmit = true;
+            // console.log(new Date().getTime() - lastTime);
+            // console.log(info);
+            let reg = /[\u4e00-\u9fa5]/g;
+            // console.log(info.toString().match(reg).join(""));
+            chrome.runtime.sendMessage({cmd: info.match(reg).join("")});
+        }
+    });
 
     // 新建form发起请求
     // let list = ["payment", "submit_delete_word", "token", "md5", "account", "price", "payword"];
@@ -114,9 +115,9 @@ function pay(text) {
 // 接受消息
 chrome.runtime.onMessage.addListener(
     function (request, sender, sendResponse) {
-        if(request.msg === "stop"){
+        if (request.msg === "stop") {
             isStop = true;
-            sendResponse({msg: "已停止！！共发起" + num*200 + "个请求"});
+            sendResponse({msg: "已停止！！共发起" + num * 200 + "个请求"});
         } else {
             code = request.msg.code;
             password = request.msg.password;
@@ -130,14 +131,15 @@ chrome.runtime.onMessage.addListener(
 // chrome.runtime.sendMessage({cmd: "已停止"});
 
 function start(code) {
-    for (let i = 0; i < 1; i++) {
-        // console.log(!isStop && i === 199);
-        // if(!isStop && i === 199) {
-        //     // start(code);
-        // }
-        // setTimeout(function () {
-        //     ajax_get("http://www.nilaidang.com/order/order-reserve-" + code + ".html", i);
-        // }, 500);
-        ajax_get("http://www.nilaidang.com/order/order-reserve-" + code + ".html", i).then();
-    }
+    ajax_get("http://www.nilaidang.com/order/order-reserve-" + code + ".html");
+    // for (let i = 0; i < 200; i++) {
+    //     // console.log(!isStop && i === 199);
+    //     // if(!isStop && i === 199) {
+    //     //     // start(code);
+    //     // }
+    //     // setTimeout(function () {
+    //     //     ajax_get("http://www.nilaidang.com/order/order-reserve-" + code + ".html", i);
+    //     // }, 500);
+    //     ajax_get("http://www.nilaidang.com/order/order-reserve-" + code + ".html", i);
+    // }
 }
