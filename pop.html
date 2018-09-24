@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>pop</title>
+</head>
+<style>
+    body{
+        width: 200px;
+        height: 300px;
+    }
+    button{
+        width: 80px;
+        height: 30px;
+        border: 0;
+        background: chocolate;
+        border-radius: 5px;
+        outline: none;
+        cursor: pointer;
+        float: right;
+        margin: 10px 3px;
+    }
+    input{
+        width: 180px;
+        height: 30px;
+        border: 1px solid #000000;
+        border-radius: 6px;
+        padding: 0 10px;
+    }
+    span{
+        display: block;
+        margin: 10px 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    #statue{
+        width: 100%;
+        float: left;
+        font-size: 14px;
+        color: red;
+        display: block;
+        margin-top: 20px;
+    }
+</style>
+<body>
+<div>
+    <span>页面编码：</span>
+    <input id="code" placeholder="输入页面的编码" value="31017">
+</div>
+<div>
+    <span>支付密码：</span>
+    <input id="password" placeholder="一定要正确，否则可能会失败">
+</div>
+<button id="btu" onclick="sum()">开始监听</button>
+<button id="stop" onclick="sum('stop')">停止</button>
+<div id="statue"></div>
+<script src="index.js"></script>
+</body>
+</html>
