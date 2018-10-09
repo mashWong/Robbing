@@ -47,30 +47,38 @@ function getVal(text, str1, str2) {
 
 // 支付订单
 function pay(text) {
-    waitTime = new Date().getTime();
-    console.log("开始支付，耗时：" + (waitTime - startTime));
-    // jq的Ajax提交
-    $.ajax({
-        url: "http://www.nilaidang.com/order/order-reserve-" + code + ".html",
-        data: "payment=2&submit=1&token=" + getVal(text, 'name="token"  value="', '" />')
-            + "&md5=" + encodeURIComponent(getVal(text, 'name="md5"  value="', '" />'))
-            + "&account=" + getVal(text, 'name="account" value="', '" id="account"')
-            + "&price=" + getVal(text, 'name="price"  value="', '" id="price"')
-            + "&payword=" + password,
-        type: "get",
-        contentType: "x-www-form-urlencoded",
-        processData: false,
-        success: function (info) {
-            isSubmit = true;
-            // console.log("支付消耗：" + (new Date().getTime() - lastTime));
-            console.log("等待支付时长：" + (new Date().getTime() - waitTime));
-            console.log("总耗时：" + (new Date().getTime() - startTime));
-            let reg = /[\u4e00-\u9fa5]/g;
-            // console.log(info.toString().match(reg).join(""));
-            chrome.runtime.sendMessage({cmd: info.match(reg).join("") + "等待支付时长:" + (new Date().getTime() - waitTime)});
-        }
-    });
-    isSubmit = true;
+    let _url = "http://www.nilaidang.com/order/order-reserve-" + code + ".html?" +
+        "payment=2&submit=1&token=" + getVal(text, 'name="token"  value="', '" />')
+        + "&md5=" + encodeURIComponent(getVal(text, 'name="md5"  value="', '" />'))
+        + "&account=" + getVal(text, 'name="account" value="', '" id="account"')
+        + "&price=" + getVal(text, 'name="price"  value="', '" id="price"')
+        + "&payword=" + password;
+
+    window.location.assign(_url);
+    // waitTime = new Date().getTime();
+    // console.log("开始支付，耗时：" + (waitTime - startTime));
+    // // jq的Ajax提交
+    // $.ajax({
+    //     url: "http://www.nilaidang.com/order/order-reserve-" + code + ".html",
+    //     data: "payment=2&submit=1&token=" + getVal(text, 'name="token"  value="', '" />')
+    //         + "&md5=" + encodeURIComponent(getVal(text, 'name="md5"  value="', '" />'))
+    //         + "&account=" + getVal(text, 'name="account" value="', '" id="account"')
+    //         + "&price=" + getVal(text, 'name="price"  value="', '" id="price"')
+    //         + "&payword=" + password,
+    //     type: "get",
+    //     contentType: "x-www-form-urlencoded",
+    //     processData: false,
+    //     success: function (info) {
+    //         isSubmit = true;
+    //         // console.log("支付消耗：" + (new Date().getTime() - lastTime));
+    //         console.log("等待支付时长：" + (new Date().getTime() - waitTime));
+    //         console.log("总耗时：" + (new Date().getTime() - startTime));
+    //         let reg = /[\u4e00-\u9fa5]/g;
+    //         // console.log(info.toString().match(reg).join(""));
+    //         chrome.runtime.sendMessage({cmd: info.match(reg).join("") + "   等待支付时长:" + (new Date().getTime() - waitTime)});
+    //     }
+    // });
+    // isSubmit = true;
 }
 
 // 接受消息
@@ -120,11 +128,11 @@ function start(code) {
             return res.text()
         }).then((res) => { //返回请求结果
             isGo = false;
-            if (i === 0) console.log("初始化完成");
+            // if (i === 0) console.log("初始化完成");
             if (!isSubmit && res.length > 500) {
-                controller.abort();
+                // controller.abort();
                 lastTime = new Date().getTime();
-                console.log("下订单， index为" + i + "");
+                // console.log("下订单， index为" + i + "");
                 pay(getVal(res.toString(), "<form", "</form>"));
             } else {
                 if (i === 199 && !isSubmit) {
@@ -140,5 +148,6 @@ function start(code) {
         //
         // fetch_get("http://www.nilaidang.com/order/order-reserve-" + code + ".html", i).then();
     }
+
     // ajax_get("http://www.nilaidang.com/order/order-reserve-" + code + ".html");
 }

@@ -20,6 +20,8 @@ window.sum = function (text) {
 };
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    document.getElementById("statue").innerText = request.cmd;
-    console.log(request.cmd);
+    if(request.cmd){
+        document.getElementById("statue").innerText = request.cmd;
+        console.log(request.cmd);
+    }
 });
