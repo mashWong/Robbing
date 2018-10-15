@@ -7,8 +7,7 @@
         "script.js"
       ],
       "matches": [
-        "http://*/*",
-        "https://*/*"
+        "http://www.nilaidang.com/*"
       ]
     }
   ],
